@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/users', async (req, res) => {
   try {
     const {
-      email,
+      nickname,
       password,
       confirmPassword,
       name,
@@ -18,14 +18,14 @@ router.post('/users', async (req, res) => {
     } = req.body;
 
     //동일한 가입자가 있는지 email을 통해 확인한다.
-    const isExistUser = await Users.findOne({ where: { email } });
+    const isExistUser = await Users.findOne({ where: { nickname } });
 
     if (isExistUser) {
-      return res.status(409).json({ message: '이미 존재하는 이메일입니다.' });
+      return res.status(409).json({ message: '이미 존재하는 닉네임입니다.' });
     }
 
     //닉네임 길이 제한
-    if (name.length < 3) {
+    if (nickname.length < 3) {
       res
         .status(412)
         .json({ errorMessage: '닉네임 형식이 일치하지 않습니다.' });
@@ -33,8 +33,8 @@ router.post('/users', async (req, res) => {
     }
 
     //닉네임 형식
-    const nameRegex = /^[a-zA-Z0-9]+$/;
-    if (!nameRegex.test(name)) {
+    const nicknameRegex = /^[a-zA-Z0-9]+$/;
+    if (!nicknameRegex.test(nickname)) {
       res
         .status(412)
         .json({ errorMessage: '닉네임 형식이 일치하지 않습니다.' });
@@ -42,7 +42,7 @@ router.post('/users', async (req, res) => {
     }
 
     //닉네임 4자리 이상, 닉네임과 같은 값 포함
-    if (password.length < 4 || password.includes(name)) {
+    if (password.length < 4 || password.includes(nickname)) {
       res
         .status(412)
         .json({ errorMessage: '패스워드에 닉네임이 포함되어있습니다.' });
@@ -58,7 +58,7 @@ router.post('/users', async (req, res) => {
     }
 
     //모든 조건에 부합하면 Users 테이블에 사용자를 추가합니다.
-    const user = await Users.create({ email, password });
+    const user = await Users.create({ nickname, password });
     // UserInfos 테이블에 사용자 정보를 추가합니다.
     const userInfo = await UserInfos.create({
       UserId: user.userId, // 생성한 유저의 userId를 바탕으로 사용자 정보를 생성합니다.
@@ -78,9 +78,9 @@ router.post('/users', async (req, res) => {
 // 로그인
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { nickname, password } = req.body;
     //사용자가 존재하는지 찾아보자
-    const user = await Users.findOne({ where: { email } });
+    const user = await Users.findOne({ where: { nickname } });
     if (!user) {
       return res
         .status(401)
@@ -107,7 +107,7 @@ router.get('/users/:userId', async (req, res) => {
 
   const user = await Users.findOne({
     where: { userId },
-    attributes: ['userId', 'email', 'createdAt', 'updatedAt'],
+    attributes: ['userId', 'nickname', 'createdAt', 'updatedAt'],
     include: [
       {
         model: UserInfos, // 1:1 관계를 맺고있는 UserInfos 테이블을 조회합니다.
